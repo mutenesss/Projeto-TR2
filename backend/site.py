@@ -4,9 +4,10 @@ import sqlite3
 from datetime import datetime
 import pandas as pd
 from dash import Dash, dcc, html
+import dash_bootstrap_components as dbc
 
-
-app = Dash(__name__)
+dbc_css = ("/Bootstrap/assets/bootstrap/css/bootstrap.min.css")
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css])
 server = app.server
 CORS(server)  
 
@@ -74,14 +75,65 @@ def define_layout():
             html.H1(children='Projeto TR2'),
             html.P(children=('Apresenta o nível de um tanque de combustível obtido utilizando as medidas de um sensor ultrassonico (HC-SR04)')),
             dcc.Graph(figure={'data': [{'x': df['date_time'], 'y': df['medida'], 'type': 'line', 'name': 'Nível do tanque'}], 'layout': {'title': 'Nível do tanque'}}),
-            dcc.Interval(id='interval-component', interval=5*1000, n_intervals=0),
+            dcc.Interval(id='interval-component', interval=60000),
         ]
     )
-
-    app.layout = app_layout
-    return app.run_server(debug=True)
+    
+def layout_index():
+    df = query_to_dataframe()
+    app.layout= html.Div(
+        id='body', children=[
+            html.Div(id='wrapper', children=[
+                dbc.NavbarSimple(children=[
+                    dbc.NavItem(dbc.NavLink('Dashboard', href='#')),
+                    dbc.NavItem(dbc.NavLink('Tabela de Dados', href='#')),
+                ])
+            ]),
+            html.Div(id='content', children=[
+                dbc.Container(id='container', fluid=True,children=[
+                    html.H2('Leitor do nível de tanque de combustível utilizando LoRa', style='margin-top: -60px'),
+                    dbc.Row(children=[
+                        dbc.Col(children=[
+                            dbc.Card(children=[
+                                html.H6('Histórico do Tanque', className='card-title'),
+                                dcc.Graph(figure={'data': [{'x': df['date_time'], 'y': df['medida'], 'type': 'line', 'name': 'Nível do tanque'}], 'layout': {'title': 'Nível do tanque'}}),
+                            ]),
+                        ]),
+                    ]),
+                    dbc.Row(children=[
+                        dbc.Col(children=[
+                            dbc.Card(children=[
+                                dbc.CardHeader(children=[
+                                    html.H6('Dados'),
+                                ]),
+                                dbc.CardBody(children=[
+                                    html.H4('Ultima Medição'),
+                                    dbc.Card(children=[
+                                        dbc.CardBody(children=[
+                                            html.P('Data: ' + str(df['data'].iloc[0])),
+                                            html.P('Hora: ' + str(df['hora'].iloc[0])),
+                                            html.P('Medida: ' + str(df['medida'].iloc[0])),
+                                        ]),
+                                    ]),
+                                ]),                            
+                            ]),
+                            dbc.Card(children=[
+                                dbc.CardHeader(children=[
+                                    html.H6('Previsão para Esvaziar o Tanque'),
+                                ]),
+                                dbc.CardBody(children=[
+                                    html.H4('Data: '),
+                                ]),
+                            ]),
+                        ]),
+                    ]),
+                ])
+            ]),
+        ])
+    return app.layout
 
 
 if __name__ == "__main__":
-    app.layout = define_layout()
-    server.run(host='0.0.0.0', debug=True)
+    layout_index()
+    app.run_server(debug=True)
+    #server.run(host='0.0.0.0', debug=True)
