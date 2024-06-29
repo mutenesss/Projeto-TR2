@@ -5,8 +5,9 @@ from datetime import datetime
 import pandas as pd
 from dash import Dash, dcc, html
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 
-dbc_css = ("/Bootstrap/assets/bootstrap/css/bootstrap.min.css")
+dbc_css = ("/Bootstrap/assets/bootstrap/css/bootstrap.min.css","https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap","/Bootstrap/assets/fonts/fontawesome-all.min.css")
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css])
 server = app.server
 CORS(server)  
@@ -80,26 +81,13 @@ def define_layout():
     )
     
 def layout_index():
-    df = query_to_dataframe()
-    app.layout= html.Div(
-        id='body', children=[
-            html.Div(id='wrapper', children=[
-                dbc.NavbarSimple(children=[
-                    dbc.NavItem(dbc.NavLink('Dashboard', href='#')),
-                    dbc.NavItem(dbc.NavLink('Tabela de Dados', href='#')),
-                ])
-            ]),
+    app.layout= html.Div(id='body', 
+        children=[
+        html.Div(id='wrapper', children=[navBar], style={'margin-right': '2px','fixed': False, 'height': '100%'}),
+        html.Div(id='content_wrapper', children=[
             html.Div(id='content', children=[
                 dbc.Container(id='container', fluid=True,children=[
-                    html.H2('Leitor do nível de tanque de combustível utilizando LoRa', style='margin-top: -60px'),
-                    dbc.Row(children=[
-                        dbc.Col(children=[
-                            dbc.Card(children=[
-                                html.H6('Histórico do Tanque', className='card-title'),
-                                dcc.Graph(figure={'data': [{'x': df['date_time'], 'y': df['medida'], 'type': 'line', 'name': 'Nível do tanque'}], 'layout': {'title': 'Nível do tanque'}}),
-                            ]),
-                        ]),
-                    ]),
+                    html.Div(id='content', children=[data_containter]),
                     dbc.Row(children=[
                         dbc.Col(children=[
                             dbc.Card(children=[
@@ -127,10 +115,52 @@ def layout_index():
                             ]),
                         ]),
                     ]),
-                ])
-            ]),
-        ])
+                ]),
+            ])
+        ]),
+        dcc.Interval(id='interval component', interval=60000, n_intervals=0)
+    ])
     return app.layout
+
+df = query_to_dataframe()
+current_value = df['medida'].iloc[0]
+
+navBar = html.Div(id='sidebar', children=[
+    dbc.Nav(vertical=True, pills=True, justified=True, children=[
+        dbc.NavLink('Dashboard', href='#', style={'color': 'white'}),
+        dbc.NavLink('Tabela de Dados', href='#', style={'color': 'white'}),
+        ], style={
+            "position": "right",
+            "width": "250px",
+            "height": "100%",
+            "background-color": "#4e73df",
+            "padding": "10px",
+            "fixed": False,
+        })
+    ])
+
+data_containter = html.Div(id='data_container', children=[
+    html.Div(id='data_header', children=[html.H2(html.B('Leitor do nível de tanque de combustível utilizando LoRa'))], style={'justify-content': 'center', 'align-items': 'center'}),
+    dbc.Row(id='content_row',children=[
+        dbc.Col(id='graph_col', children=[
+            dbc.Card(id='graph_card', children=[
+                dbc.CardHeader(id='card_header', children=[html.H6(html.B('Histórico do Tanque'), className='card-title')]),
+                dbc.CardBody(id='card_body', children=[
+                    dcc.Graph(id='graph', figure={'data': [{'x': df['date_time'], 'y': df['medida'], 'type': 'line', 'name': 'Historico do tanque'}], 'layout': {'title': 'Histórico do tanque'}}),
+                ]),
+            ]),
+        ]),
+        dbc.Col(id='tank_col', children=[
+            dbc.Card(id='tank_card', children=[
+                dbc.CardHeader(id='card_header', children=[html.H6(html.B('Nível do Tanque'), className='card-title')]),
+                dbc.CardBody(id='card_body', children=[
+                    daq.Tank(id='tank', value=current_value, label='Nível do Tanque', labelPosition='top', 
+                         min=0, max=100, showCurrentValue=True, units='Moedas de 1 real', style={'margin-top': '10px', 'margin-left': '10px'}),
+                ]),
+            ]),
+        ]),
+    ]),
+])
 
 
 if __name__ == "__main__":
