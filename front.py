@@ -13,7 +13,7 @@ urlAPI = f'http://{address}:{port}/api/data'
 # Set max and min values for tank level
 max_level = 2
 min_level = 40
-
+st.set_page_config(layout='wide')
 # Create a placeholder for the data
 placeholder = st.empty()
 while True:
@@ -80,24 +80,29 @@ while True:
 
             left_column, right_column = st.columns(2,vertical_alignment='bottom', gap='large')
 
+            left_column_container = left_column.container()
+            right_column_container = right_column.container()
+
             # Data visualization
-            left_column.subheader('Nível do Tanque: Gráfico de Barras')
-            left_column.bar_chart(data=df, x='date_time', y='level', x_label='Data e Hora', y_label='Nivel do Tanque')
-            left_column.subheader('Nível do Tanque: Recorte dos Últimos 50 Registros')
-            left_column.bar_chart(data=df.tail(50), x='date_time', y='level', x_label='Data e Hora', y_label='Nivel do Tanque')
+            left_column_container.subheader('Nível do Tanque: Gráfico de Barras')
+            left_column_container.bar_chart(data=df, x='date_time', y='level', x_label='Data e Hora', y_label='Nivel do Tanque')
+            left_column_container.subheader('Nível do Tanque: Recorte dos Últimos 50 Registros')
+            left_column_container.bar_chart(data=df.head(50), x='date_time', y='level', x_label='Data e Hora', y_label='Nivel do Tanque')
             
             right_column.subheader('Nível do Tanque: Gráfico de Área')
             right_column.area_chart(data=df, x='date_time', y='level', x_label='Data e Hora', y_label='Nivel do Tanque')
-
-            table_row = right_column.container()
-
-            table_row.subheader('Tabela de Dados')
-            table_row.dataframe(df)
+            
+            right_column_container.subheader('Tabela de Dados')
+            right_column_container.dataframe(df)
             if estimated_empty_time != None:
-                st.header(f'Previsão para esvaziar:\n') 
-                st.subheader(estimated_empty_time.strftime('%H:%M:%S'))
+                if estimated_empty_time < dt.datetime.now():
+                    st.header(f'Tanque vazio ou Tempo estimado no passado.\n Sem previsão para esvaziar')
+                else:
+                    st.header(f'Previsão para esvaziar:\n') 
+                    st.subheader(estimated_empty_time.strftime('%d/%m/%Y'))
+                    st.subheader(estimated_empty_time.strftime('%H:%M:%S'))
             else:
-                st.header(f'Tanque enchendo ou nível constante no momento.\n Sem previsão para esvaziar')
+                st.header(f'Não foi possível calcular uma previsão. \nTanque não está esvaziando no momento.')
             st.header(f'Data e Hora Atuais: \n')
             st.subheader(f'{dt.datetime.today().strftime('%d/%m/%Y')}, {dt.datetime.now().strftime('%H:%M:%S')}')
             time.sleep(10)

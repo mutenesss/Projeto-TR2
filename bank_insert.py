@@ -13,8 +13,9 @@ min_level = 40
 #for i in range(50):
     #value = random.randint(max_level, min_level)
 value = 20
-for i in range(15):
+for i in range(20, 40):
     data_send = requests.post(urlAPI, json={'value': value})
     sleep_time = random.randint(3, 10)
     time.sleep(sleep_time)
+    value += 1
 

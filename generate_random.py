@@ -10,7 +10,8 @@ urlAPI = f'http://{address}:{port}/api/data'
 max_level = 2
 min_level = 40
 
-for i in range(50):
+#for i in range(50):
+while True:
     value = random.randint(max_level, min_level)
     data_send = requests.post(urlAPI, json={'value': value})
     sleep_time = random.randint(3, 10)
